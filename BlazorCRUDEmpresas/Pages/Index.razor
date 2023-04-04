@@ -1,0 +1,64 @@
+﻿@page "/"
+
+@using BlazorCRUDEmpresas.Models;
+@inject IJSRuntime JSRuntime
+@inject BlazorCRUDEmpresas.Services.ICompanyServices CompanyService;
+
+<PageTitle>Empresas</PageTitle>
+
+<h1>Empresas</h1>
+
+Bem vindo a listagem das empresas!
+
+<a href="/create" class="btn btn-success">Criar</a> 
+<table class="table table-responsive table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nome Empresa</th>
+            <th>Telefone</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(companies != null && companies.Count > 0)
+        {
+            foreach(var item in companies)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Nome</td>
+                    <td>@item.Fone</td>
+                    <td>
+                        <a href="/update/@item.Id" class="btn btn-warning">Atualizar</a>
+                        <button class="btn btn-danger" @onclick= "async () => await DeleteCompany(item.Id)">Deletar</button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code{
+    List<Company> companies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        companies = await CompanyService.FindAll();
+    }
+
+    async Task DeleteCompany(Guid Id)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("Confirme", "Tem certeza que deseja deletar?");
+        if (confirmed is false)
+            return;
+
+        var company = await CompanyService.GetBy(Id);
+        await CompanyService.Delete(company);
+
+        companies = await CompanyService.FindAll();
+
+        StateHasChanged();
+    }
+
+}
